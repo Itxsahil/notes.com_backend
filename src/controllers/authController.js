@@ -73,7 +73,12 @@ const login = asyncHandler(async (req, res) => {
         return res.status(200)
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
-            .json({ message: 'User logged in', logeduser });
+            .json({ 
+                message: 'User logged in', 
+                logeduser, 
+                accessToken, 
+                refreshToken 
+            });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -124,14 +129,14 @@ const managerRequests = asyncHandler(async (req, res) => {
     res.status(200).json({ message: "the requested users are...", requests })
 })
 
-const toggelMaanagerStatus = asyncHandler(async (req, res)=>{
-    const {userId} = req.params
+const toggelMaanagerStatus = asyncHandler(async (req, res) => {
+    const { userId } = req.params
 
-    if(!userId) return res.json({message : "please provide an user id"})
+    if (!userId) return res.json({ message: "please provide an user id" })
     const user = await User.findByIdAndUpdate(userId).select("-password -refreshToken -is_admin")
     user.is_manager = !user.is_manager
     await user.save()
-    return res.status(200).json({message:"status toggeled sucessfully", user})
+    return res.status(200).json({ message: "status toggeled sucessfully", user })
 })
 export {
     register,

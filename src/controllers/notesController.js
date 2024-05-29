@@ -17,8 +17,8 @@ const uploadNote = asyncHandler(async(req, res) => {
         const note = new Note({
             branch,
             sem,
-            subject,
-            title,
+            subject :subject.toLowerCase(),
+            title: title.toLowerCase(),
             module,
             file: fileUrl.toString(),
             user: req.user.id,
