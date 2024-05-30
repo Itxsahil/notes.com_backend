@@ -2,22 +2,22 @@ import { Note } from "../models/Note.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadToFileServerAndReturnBackUrl } from "../utils/discord.js";
 
-const uploadNote = asyncHandler(async(req, res) => {
+const uploadNote = asyncHandler(async (req, res) => {
     const { branch, sem, subject, title, module } = req.body;
     const fileLocalPath = req.file?.path
-    if(!branch) return res.json({message : "branch required"})
-    if(!sem) return res.json({message : "sem required"})
-    if(!title) return res.json({message : "title required"})
-    if(!module) return res.json({message : "module required"})
-    if(!subject) return res.json({message : "subject required"})
-    if(!fileLocalPath) return res.json({message : "file required"})
-    
-    const fileUrl = await uploadToFileServerAndReturnBackUrl(fileLocalPath,title)
+    if (!branch) return res.json({ message: "branch required" })
+    if (!sem) return res.json({ message: "sem required" })
+    if (!title) return res.json({ message: "title required" })
+    if (!module) return res.json({ message: "module required" })
+    if (!subject) return res.json({ message: "subject required" })
+    if (!fileLocalPath) return res.json({ message: "file required" })
+
+    const fileUrl = await uploadToFileServerAndReturnBackUrl(fileLocalPath, title)
     try {
         const note = new Note({
             branch,
             sem,
-            subject :subject.toLowerCase(),
+            subject: subject.toLowerCase(),
             title: title.toLowerCase(),
             module,
             file: fileUrl.toString(),
@@ -35,7 +35,7 @@ const uploadNote = asyncHandler(async(req, res) => {
 
 const getNotes = asyncHandler(async (req, res) => {
     let { branch, sem, subject, module } = req.query;
-    console.log(branch, sem, subject, module)
+    // console.log(branch, sem, subject, module)
     let page = parseInt(req.query.page) || 1;
     const pageSize = 10;
 
@@ -70,14 +70,38 @@ const getNotes = asyncHandler(async (req, res) => {
     });
 });
 
-const deleteNotes = asyncHandler(async(req, res)=>{
-    const {noteId} = req.params
-    if(!noteId) return res.json({message: "please provide the file ID"})
+const deleteNotes = asyncHandler(async (req, res) => {
+    const { noteId } = req.params
+    if (!noteId) return res.json({ message: "please provide the file ID" })
     await Note.findByIdAndDelete(noteId)
-    return res.status(200).json({message : "file deleted sucessfully"})
+    return res.status(200).json({ message: "file deleted sucessfully" })
+})
+
+const myNotes = asyncHandler(async (req, res) => {
+    let page = parseInt(req.query.page) || 1;
+    const pageSize = 10
+    const totalNotes = await Note.countDocuments({ user: req.user._id });
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalNotes / pageSize);
+
+    // Fetch notes for the current page
+    const notes = await Note.find({ user: req.user._id })
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+
+    // Prepare the response
+    res.json({
+        notes,
+        currentPage: page,
+        totalPages,
+        hasMore: page < totalPages
+    });
+
 })
 export {
     uploadNote,
     getNotes,
-    deleteNotes
+    deleteNotes,
+    myNotes
 }
